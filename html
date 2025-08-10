@@ -1,0 +1,281 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Blob Duo</title>
+  <style>
+    body {
+      margin: 0;
+      background: linear-gradient(120deg, #89d0ff 0%, #fde3ec 100%);
+      font-family: 'Quicksand', Arial, sans-serif;
+      color: #222;
+      min-height: 100vh;
+      overflow: hidden;
+    }
+    #mainMenu, #mapSelector, #characterSelector, #settingsOverlay {
+      position: fixed;
+      top: 0; left: 0;
+      width: 100vw; height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      background: rgba(255,255,255,0.7);
+      z-index: 50;
+      transition: opacity 0.4s;
+    }
+    .menu-card {
+      background: #fff;
+      box-shadow: 0 4px 18px #2222;
+      border-radius: 22px;
+      padding: 40px 60px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      min-width: 340px;
+      animation: fadeIn 0.6s;
+    }
+    @keyframes fadeIn {
+      from { opacity: 0; transform: scale(0.98);}
+      to { opacity: 1; transform: scale(1);}
+    }
+    .menu-title {
+      font-size: 2.8em;
+      font-weight: bold;
+      letter-spacing: 2px;
+      margin-bottom: 28px;
+      color: #3c91ff;
+      text-shadow: 2px 2px 6px #89d0ff44;
+      font-family: 'Fredoka One', cursive, sans-serif;
+    }
+    .menu-btn {
+      background: linear-gradient(90deg, #6a93cb 0%, #aef1ff 100%);
+      color: #222;
+      border: none;
+      border-radius: 12px;
+      font-size: 1.3em;
+      font-weight: 600;
+      padding: 18px 48px;
+      margin: 18px 0;
+      cursor: pointer;
+      box-shadow: 0 2px 6px #2222;
+      transition: background 0.2s, transform 0.1s;
+    }
+    .menu-btn:hover {
+      background: linear-gradient(90deg, #4e6b9b 0%, #89d0ff 100%);
+      transform: scale(1.04);
+    }
+    #gameCanvas {
+      display: none;
+      margin: 24px auto;
+      background: linear-gradient(#e0eafc, #cfdef3);
+      border: 3px solid #444;
+      box-shadow: 0 0 12px #222;
+      transition: box-shadow 0.2s;
+    }
+    #victoryMessage {
+      font-size: 2em;
+      color: #ff4444;
+      min-height: 2em;
+      margin-top: 12px;
+      text-shadow: 2px 2px 6px #fff7;
+      text-align: center;
+      font-weight: bold;
+      z-index: 2;
+    }
+    /* Map selector styles */
+    .map-list {
+      display: flex;
+      gap: 36px;
+      margin: 18px 0;
+      flex-wrap: wrap;
+      justify-content: center;
+    }
+    .map-card {
+      background: #f2faff;
+      border-radius: 18px;
+      box-shadow: 0 2px 8px #2221;
+      padding: 20px 38px;
+      cursor: pointer;
+      font-size: 1.2em;
+      font-weight: 600;
+      border: 3px solid #89d0ff00;
+      transition: border 0.2s, box-shadow 0.2s;
+    }
+    .map-card.selected {
+      border: 3px solid #3c91ff;
+      box-shadow: 0 4px 16px #3c91ff44;
+    }
+    .map-card:hover {
+      border: 3px solid #89d0ff;
+      box-shadow: 0 4px 16px #89d0ff44;
+    }
+    /*--- Character selector styles ---*/
+    .character-selector-grid {
+      display: flex;
+      flex-direction: row;
+      gap: 48px;
+      justify-content: center;
+      align-items: flex-start;
+      width: 100%;
+    }
+    .character-column {
+      flex: 1;
+      min-width: 320px;
+      max-width: 390px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      background: #f5faff;
+      border-radius: 18px;
+      box-shadow: 0 2px 10px #2222;
+      padding: 18px 0 24px 0;
+    }
+    .character-list {
+      display: flex;
+      flex-direction: column;
+      gap: 22px;
+      width: 100%;
+      align-items: center;
+    }
+    .character-card {
+      background: #f9f2ff;
+      border-radius: 16px;
+      box-shadow: 0 1px 8px #2221;
+      padding: 14px 0;
+      cursor: pointer;
+      font-size: 1.18em;
+      font-weight: 600;
+      border: 3px solid #89d0ff00;
+      color: #222;
+      width: 90%;
+      max-width: 320px;
+      display: flex;
+      flex-direction: row;
+      align-items: center;
+      justify-content: flex-start;
+      transition: border 0.2s, box-shadow 0.2s, background 0.2s;
+    }
+    .character-card.selected {
+      border: 3px solid #ff67c4;
+      background: #fff4fa;
+      box-shadow: 0 4px 16px #ff67c444;
+    }
+    .character-card:hover {
+      border: 3px solid #3c91ff;
+      background: #e7f7ff;
+      box-shadow: 0 4px 16px #3c91ff44;
+    }
+    .character-blob {
+      width: 48px;
+      height: 48px;
+      border-radius: 50%;
+      margin-right: 18px;
+      box-shadow: 0 2px 4px #2222;
+      border: 2px solid #fff;
+      flex-shrink: 0;
+    }
+    .character-info {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-start;
+    }
+    .character-name {
+      font-size: 1.1em;
+      font-weight: bold;
+      margin-bottom: 3px;
+    }
+    .character-desc {
+      font-size: 0.98em;
+      color: #666;
+      margin-top: 2px;
+      line-height: 1.3em;
+      font-weight: 400;
+    }
+    /* Settings overlay */
+    #settingsOverlay .menu-card {
+      min-width: 340px;
+      max-width: 420px;
+    }
+    .settings-label {
+      font-size: 1.1em;
+      font-weight: 600;
+      margin: 14px 0 8px 0;
+      color: #3c91ff;
+    }
+    .settings-item input[type="range"] {
+      width: 200px;
+    }
+    .settings-close-btn {
+      background: #ff67c4;
+      color: #fff;
+      border: none;
+      border-radius: 8px;
+      font-size: 1em;
+      padding: 10px 28px;
+      margin-top: 24px;
+      cursor: pointer;
+      box-shadow: 0 1px 4px #2222;
+      transition: background 0.2s;
+    }
+    .settings-close-btn:hover {
+      background: #3c91ff;
+    }
+  </style>
+</head>
+<body>
+  <div id="mainMenu" style="display:flex;">
+    <div class="menu-card" id="mainMenuCard">
+      <div class="menu-title">Blob Duo</div>
+      <button class="menu-btn" id="playGameBtn">Play Game</button>
+      <button class="menu-btn" id="settingsBtn">Settings</button>
+    </div>
+  </div>
+  <div id="mapSelector" style="display:none;">
+    <div class="menu-card">
+      <div class="menu-title" style="font-size:2em;">Choose a Map</div>
+      <div class="map-list" id="mapList"></div>
+      <button class="menu-btn" id="mapContinueBtn">Continue</button>
+    </div>
+  </div>
+  <div id="characterSelector" style="display:none;">
+    <div class="menu-card" style="width: 840px; max-width:90vw;">
+      <div class="menu-title" style="font-size:2em;">Choose Your Characters</div>
+      <div class="character-selector-grid">
+        <div class="character-column" id="charColumn1">
+          <div style="font-size:1.3em; margin-bottom:10px;"><b>Player 1</b></div>
+          <div class="character-list" id="charList1"></div>
+        </div>
+        <div class="character-column" id="charColumn2">
+          <div style="font-size:1.3em; margin-bottom:10px;"><b>Player 2</b></div>
+          <div class="character-list" id="charList2"></div>
+        </div>
+      </div>
+      <button class="menu-btn" id="charStartBtn" style="margin-top:32px;">Start Game</button>
+    </div>
+  </div>
+  <div id="settingsOverlay" style="display:none;">
+    <div class="menu-card">
+      <div class="menu-title" style="font-size:2em;">Settings</div>
+      <div class="settings-label">Volume</div>
+      <div class="settings-item">
+        <input type="range" min="0" max="100" id="volumeSlider" value="70">
+        <span id="volumeValue">70</span>
+      </div>
+      <div class="settings-label">Color Mode</div>
+      <div class="settings-item">
+        <select id="colorModeSelect">
+          <option value="default">Default</option>
+          <option value="dark">Dark</option>
+          <option value="light">Light</option>
+        </select>
+      </div>
+      <button class="settings-close-btn" id="settingsCloseBtn">Close</button>
+    </div>
+  </div>
+  <div id="victoryMessage"></div>
+  <canvas id="gameCanvas" width="900" height="600"></canvas>
+  <div id="controls" style="display:none;"></div>
+  <script src="blob-duel.js"></script>
+</body>
+</html>
